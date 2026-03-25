@@ -1,6 +1,6 @@
 import { View, TextInput, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { theme } from "@/lib/theme";
+import { useTheme } from "@/lib/theme";
 
 interface SearchBarProps {
   value: string;
@@ -9,6 +9,7 @@ interface SearchBarProps {
 }
 
 export function SearchBar({ value, onChangeText, placeholder }: SearchBarProps) {
+  const { theme } = useTheme();
   return (
     <View
       style={{

@@ -6,7 +6,7 @@ import { useTranslation } from "react-i18next";
 import { db } from "@/lib/instant";
 import { isRoomActive, cleanupExpiredRooms } from "@/lib/room";
 import { useCurrentUser } from "@/lib/identity";
-import { theme } from "@/lib/theme";
+import { useTheme } from "@/lib/theme";
 import { HomeHeader } from "@/components/home/HomeHeader";
 import { RoomCard } from "@/components/home/RoomCard";
 import { RoomListSkeleton } from "@/components/home/RoomCardSkeleton";
@@ -16,6 +16,7 @@ export default function PublicRoomsScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { user } = useCurrentUser();
+  const { theme } = useTheme();
   const senderId = user?.id ?? "";
   const [search, setSearch] = useState("");
 

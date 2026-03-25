@@ -8,10 +8,11 @@ import { EmailLinkSheet } from "@/components/auth/EmailLinkSheet";
 import { createRoom, type RoomConfig } from "@/lib/room";
 import { useCurrentUser, useProfile } from "@/lib/identity";
 import { db } from "@/lib/instant";
-import { theme } from "@/lib/theme";
+import { useTheme } from "@/lib/theme";
 
 export function HomeHeader() {
   const { t } = useTranslation();
+  const { theme } = useTheme();
   const router = useRouter();
   const [showConfig, setShowConfig] = useState(false);
   const [showRecover, setShowRecover] = useState(false);
@@ -68,8 +69,8 @@ export function HomeHeader() {
       {/* Avatar + Pseudo */}
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-          <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: theme.colors.bgSecondary, alignItems: "center", justifyContent: "center" }}>
-            <Text style={{ fontSize: 18 }}>{nickname ? nickname.charAt(0).toUpperCase() : "?"}</Text>
+          <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: theme.colors.accent, alignItems: "center", justifyContent: "center" }}>
+            <Text style={{ fontSize: 18, color: theme.colors.accentText, fontWeight: "600" }}>{nickname ? nickname.charAt(0).toUpperCase() : "?"}</Text>
           </View>
           <View>
             <Text style={{ color: theme.colors.text, fontSize: 16, fontWeight: "600" }}>{nickname}</Text>

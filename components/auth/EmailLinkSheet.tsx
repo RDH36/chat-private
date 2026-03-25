@@ -3,7 +3,7 @@ import { View, Text, TextInput, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
 import { db } from "@/lib/instant";
-import { theme } from "@/lib/theme";
+import { useTheme } from "@/lib/theme";
 import { ModalSheet } from "@/components/ui/ModalSheet";
 
 type Step = "email" | "code" | "success";
@@ -22,6 +22,7 @@ export function EmailLinkSheet({
   subtitle,
 }: EmailLinkSheetProps) {
   const { t } = useTranslation();
+  const { theme } = useTheme();
   const resolvedTitle = title ?? t("auth.protectTitle");
   const resolvedSubtitle = subtitle ?? t("auth.protectSubtitle");
   const [step, setStep] = useState<Step>("email");

@@ -6,7 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
 import { SolutionTile } from "@/components/onboarding/SolutionTile";
 import { useOnboardingContext, type EmpathyProfile } from "@/hooks/useOnboarding";
-import { theme } from "@/lib/theme";
+import { useTheme } from "@/lib/theme";
 
 type TileData = {
   id: string;
@@ -37,6 +37,7 @@ export default function SolutionScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { profile } = useOnboardingContext();
+  const { theme } = useTheme();
   const tiles = getTilesForProfile(profile);
 
   return (

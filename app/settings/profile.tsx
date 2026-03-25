@@ -6,7 +6,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useTranslation } from "react-i18next";
 import { useCurrentUser, useProfile, saveNickname } from "@/lib/identity";
-import { theme } from "@/lib/theme";
+import { useTheme } from "@/lib/theme";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 
@@ -15,6 +15,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { user } = useCurrentUser();
   const { nickname, profileId } = useProfile(user?.id);
+  const { theme } = useTheme();
   const [value, setValue] = useState(nickname);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);

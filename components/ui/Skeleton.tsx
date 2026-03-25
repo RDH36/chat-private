@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Animated, type ViewStyle } from "react-native";
-import { theme } from "@/lib/theme";
+import { useTheme } from "@/lib/theme";
 
 interface SkeletonProps {
   width: number | string;
@@ -10,6 +10,7 @@ interface SkeletonProps {
 }
 
 export function Skeleton({ width, height, borderRadius = 8, style }: SkeletonProps) {
+  const { theme } = useTheme();
   const opacity = useRef(new Animated.Value(0.3)).current;
 
   useEffect(() => {

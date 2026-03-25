@@ -1,7 +1,7 @@
 import { View, Text } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, { FadeInRight } from "react-native-reanimated";
-import { theme } from "@/lib/theme";
+import { useTheme } from "@/lib/theme";
 
 type Props = {
   icon: keyof typeof Ionicons.glyphMap;
@@ -11,6 +11,7 @@ type Props = {
 };
 
 export function SolutionTile({ icon, title, subtitle, index }: Props) {
+  const { theme } = useTheme();
   return (
     <Animated.View
       entering={FadeInRight.delay(index * 120).duration(400)}

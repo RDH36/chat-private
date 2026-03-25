@@ -8,6 +8,10 @@ import {
 
 type LockMode = "loading" | "setup" | "unlock" | "unlocked";
 
+let _lockSuppressed = false;
+export function suppressLock() { _lockSuppressed = true; }
+export function unsuppressLock() { _lockSuppressed = false; }
+
 export function useLockState() {
   const [mode, setMode] = useState<LockMode>("loading");
   const appState = useRef(AppState.currentState);
@@ -32,12 +36,16 @@ export function useLockState() {
       "change",
       async (nextState: AppStateStatus) => {
         if (appState.current === "active" && nextState.match(/inactive|background/)) {
-          await setLastBackground();
+          if (!_lockSuppressed) {
+            await setLastBackground();
+          }
         }
 
         if (nextState === "active" && appState.current.match(/inactive|background/)) {
-          const needsLock = await shouldLock();
-          if (needsLock) setMode("unlock");
+          if (!_lockSuppressed) {
+            const needsLock = await shouldLock();
+            if (needsLock) setMode("unlock");
+          }
         }
 
         appState.current = nextState;

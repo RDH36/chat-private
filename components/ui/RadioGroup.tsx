@@ -1,5 +1,5 @@
 import { View, Text, Pressable } from "react-native";
-import { theme } from "@/lib/theme";
+import { useTheme } from "@/lib/theme";
 
 interface RadioOption<T extends string> {
   label: string;
@@ -17,6 +17,7 @@ export function RadioGroup<T extends string>({
   selected,
   onSelect,
 }: RadioGroupProps<T>) {
+  const { theme } = useTheme();
   return (
     <View style={{ flexDirection: "row", flexWrap: "wrap", gap: theme.spacing.sm }}>
       {options.map((opt) => {

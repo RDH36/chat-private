@@ -1,11 +1,12 @@
 import { useEffect } from "react";
 import { View } from "react-native";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from "react-native-reanimated";
-import { theme } from "@/lib/theme";
+import { useTheme } from "@/lib/theme";
 
 type Props = { step: number; total: number };
 
 export function ProgressBar({ step, total }: Props) {
+  const { theme } = useTheme();
   const progress = useSharedValue(0);
 
   useEffect(() => {

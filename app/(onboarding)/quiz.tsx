@@ -6,7 +6,7 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
 import { QuizOption } from "@/components/onboarding/QuizOption";
 import { useOnboardingContext, type EmpathyProfile } from "@/hooks/useOnboarding";
-import { theme } from "@/lib/theme";
+import { useTheme } from "@/lib/theme";
 
 type QuizQuestion = {
   key: string;
@@ -48,17 +48,24 @@ export default function QuizScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { setAnswer } = useOnboardingContext();
+  const { theme } = useTheme();
   const [step, setStep] = useState(0);
+  const [selected, setSelected] = useState<string | null>(null);
 
   const question = QUESTIONS[step];
 
   const handleSelect = (value: EmpathyProfile) => {
+    if (selected) return;
+    setSelected(value);
     setAnswer(question.key, value);
-    if (step < QUESTIONS.length - 1) {
-      setStep(step + 1);
-    } else {
-      router.replace("/(onboarding)/empathy");
-    }
+    setTimeout(() => {
+      setSelected(null);
+      if (step < QUESTIONS.length - 1) {
+        setStep(step + 1);
+      } else {
+        router.replace("/(onboarding)/empathy");
+      }
+    }, 400);
   };
 
   return (
@@ -92,7 +99,7 @@ export default function QuizScreen() {
 
         <Animated.View key={`opts-${step}`} entering={FadeInDown.delay(200).duration(400)}>
           {question.options.map((opt) => (
-            <QuizOption key={opt.value} label={t(opt.labelKey)} onPress={() => handleSelect(opt.value)} />
+            <QuizOption key={opt.value} label={t(opt.labelKey)} selected={selected === opt.value} onPress={() => handleSelect(opt.value)} />
           ))}
         </Animated.View>
       </View>

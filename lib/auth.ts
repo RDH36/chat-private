@@ -16,9 +16,13 @@ const LOCKOUT_MS = 30_000;
 
 // --- PIN ---
 
-export async function isFirstLaunch(): Promise<boolean> {
+export async function hasPinConfigured(): Promise<boolean> {
   const hash = await SecureStore.getItemAsync(KEYS.PIN_HASH);
-  return !hash;
+  return !!hash;
+}
+
+export async function isFirstLaunch(): Promise<boolean> {
+  return !(await hasPinConfigured());
 }
 
 export function hashPin(pin: string): string {

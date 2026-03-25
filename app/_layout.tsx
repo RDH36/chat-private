@@ -5,8 +5,16 @@ import { View } from "react-native";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { KeyboardProvider } from "react-native-keyboard-controller";
+import {
+  useFonts,
+  PlusJakartaSans_300Light,
+  PlusJakartaSans_400Regular,
+  PlusJakartaSans_500Medium,
+  PlusJakartaSans_600SemiBold,
+  PlusJakartaSans_700Bold,
+} from "@expo-google-fonts/plus-jakarta-sans";
 import { useCurrentUser, ensureSignedIn } from "@/lib/identity";
-import { theme } from "@/lib/theme";
+import { ThemeProvider, useTheme } from "@/lib/theme";
 import { useLockState } from "@/hooks/useLockState";
 import { useOnboardingComplete } from "@/hooks/useOnboarding";
 import { LockScreen } from "@/components/lock/LockScreen";
@@ -14,6 +22,28 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import { RoomListSkeleton } from "@/components/home/RoomCardSkeleton";
 
 export default function RootLayout() {
+  const [fontsLoaded] = useFonts({
+    PlusJakartaSans_300Light,
+    PlusJakartaSans_400Regular,
+    PlusJakartaSans_500Medium,
+    PlusJakartaSans_600SemiBold,
+    PlusJakartaSans_700Bold,
+  });
+
+  return (
+    <ThemeProvider>
+      {fontsLoaded ? <AppContent /> : <FontLoadingScreen />}
+    </ThemeProvider>
+  );
+}
+
+function FontLoadingScreen() {
+  const { theme } = useTheme();
+  return <View style={{ flex: 1, backgroundColor: theme.colors.bg }} />;
+}
+
+function AppContent() {
+  const { theme, isDark } = useTheme();
   const { user, isLoading } = useCurrentUser();
   const { mode, unlock } = useLockState();
   const { isComplete: onboardingDone, isLoading: obLoading } = useOnboardingComplete();
@@ -39,6 +69,7 @@ export default function RootLayout() {
   if (isLoading || obLoading || !user || mode === "loading") {
     return (
       <View style={{ flex: 1, backgroundColor: theme.colors.bg, paddingHorizontal: 24, paddingTop: 60 }}>
+        <StatusBar style={isDark ? "light" : "dark"} />
         {/* Header skeleton */}
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 24 }}>
           <Skeleton width={140} height={28} borderRadius={8} />
@@ -60,7 +91,7 @@ export default function RootLayout() {
   if (!onboardingDone) {
     return (
       <KeyboardProvider>
-        <StatusBar style={theme.statusBar} />
+        <StatusBar style={isDark ? "light" : "dark"} />
         <Stack
           screenOptions={{
             headerShown: false,
@@ -72,25 +103,23 @@ export default function RootLayout() {
     );
   }
 
-  if (mode === "setup" || mode === "unlock") {
-    return (
-      <KeyboardProvider>
-        <StatusBar style={theme.statusBar} />
-        <LockScreen initialMode={mode} onUnlock={unlock} />
-      </KeyboardProvider>
-    );
-  }
-
   return (
     <KeyboardProvider>
-      <StatusBar style={theme.statusBar} />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: theme.colors.bg },
-          animation: "slide_from_right",
-        }}
-      />
+      <StatusBar style={isDark ? "light" : "dark"} />
+      <View style={{ flex: 1 }}>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: theme.colors.bg },
+            animation: "slide_from_right",
+          }}
+        />
+        {(mode === "setup" || mode === "unlock") && (
+          <View style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 }}>
+            <LockScreen initialMode={mode} onUnlock={unlock} />
+          </View>
+        )}
+      </View>
     </KeyboardProvider>
   );
 }

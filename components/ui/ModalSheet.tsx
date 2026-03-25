@@ -2,7 +2,8 @@ import { useRef, useEffect } from "react";
 import { View, Text, Pressable, Modal, ScrollView, Animated, Dimensions } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
-import { theme } from "@/lib/theme";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTheme } from "@/lib/theme";
 
 const SCREEN_HEIGHT = Dimensions.get("window").height;
 
@@ -14,6 +15,8 @@ interface ModalSheetProps {
 }
 
 export function ModalSheet({ visible, onClose, title, children }: ModalSheetProps) {
+  const { theme } = useTheme();
+  const insets = useSafeAreaInsets();
   const translateY = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
   const bgOpacity = useRef(new Animated.Value(0)).current;
 
@@ -63,7 +66,7 @@ export function ModalSheet({ visible, onClose, title, children }: ModalSheetProp
             borderTopRightRadius: theme.radius.xxl,
             paddingHorizontal: theme.spacing.xl,
             paddingTop: theme.spacing.xl,
-            paddingBottom: 40,
+            paddingBottom: Math.max(insets.bottom, 20) + theme.spacing.lg,
             maxHeight: "85%",
             shadowColor: "#000",
             shadowOffset: { width: 0, height: -4 },

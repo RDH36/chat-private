@@ -12,19 +12,26 @@ const _schema = i.schema({
       messageExpiry: i.string(), // 'on_room_expiry' | 'after_read' | 'never'
       passwordHash: i.string().optional(),
       members: i.json().optional(), // string[] of user IDs
+      bannedMembers: i.json().optional(), // string[] of banned user IDs
       deletedAt: i.number().optional(),
+      allowCodeSharing: i.boolean().optional(), // default true — creator can disable code copy/share
+      allowScreenshot: i.boolean().optional(), // default false — screenshots blocked, creator can enable
     }),
     profiles: i.entity({
       userId: i.string().unique().indexed(),
       nickname: i.string().unique().indexed(),
     }),
     messages: i.entity({
-      text: i.string(),
+      text: i.string().optional(),
       senderId: i.string(),
+      imageUrl: i.string().optional(),
+      imagePath: i.string().optional(),
       senderName: i.string(),
       createdAt: i.number().indexed(),
       readBy: i.json().optional(), // string[]
-      deletedAt: i.number().optional(),
+      replyToId: i.string().optional(),
+      replyToText: i.string().optional(),
+      replyToSender: i.string().optional(),
     }),
   },
   links: {
@@ -43,6 +50,7 @@ const _schema = i.schema({
       presence: i.entity({
         senderId: i.string(),
         senderName: i.string(),
+        isTyping: i.boolean().optional(),
       }),
     },
   },

@@ -3,7 +3,7 @@ import { View, Text, Share } from "react-native";
 import * as Clipboard from "expo-clipboard";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
-import { theme } from "@/lib/theme";
+import { useTheme } from "@/lib/theme";
 import { IconButton } from "@/components/ui/IconButton";
 
 interface RoomHeaderProps {
@@ -13,6 +13,7 @@ interface RoomHeaderProps {
   isCreator: boolean;
   onSettingsPress: () => void;
   expiryBadge: React.ReactNode;
+  allowCodeSharing?: boolean;
 }
 
 export function RoomHeader({
@@ -22,8 +23,10 @@ export function RoomHeader({
   isCreator,
   onSettingsPress,
   expiryBadge,
+  allowCodeSharing = true,
 }: RoomHeaderProps) {
   const { t } = useTranslation();
+  const { theme } = useTheme();
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
@@ -77,13 +80,17 @@ export function RoomHeader({
               </Text>
             )}
           </View>
-          <IconButton
-            icon={copied ? "checkmark-outline" : "copy-outline"}
-            size={18}
-            color={copied ? theme.colors.success : theme.colors.textMuted}
-            onPress={handleCopy}
-          />
-          <IconButton icon="share-outline" size={18} color={theme.colors.textMuted} onPress={handleShare} />
+          {allowCodeSharing && (
+            <>
+              <IconButton
+                icon={copied ? "checkmark-outline" : "copy-outline"}
+                size={18}
+                color={copied ? theme.colors.success : theme.colors.textMuted}
+                onPress={handleCopy}
+              />
+              <IconButton icon="share-outline" size={18} color={theme.colors.textMuted} onPress={handleShare} />
+            </>
+          )}
         </View>
 
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
@@ -94,9 +101,7 @@ export function RoomHeader({
             <Text style={{ color: theme.colors.textMuted, fontSize: 12 }}>{onlineCount}</Text>
           </View>
 
-          {isCreator && (
-            <IconButton icon="settings-outline" onPress={onSettingsPress} />
-          )}
+          <IconButton icon="settings-outline" onPress={onSettingsPress} />
         </View>
       </View>
     </SafeAreaView>

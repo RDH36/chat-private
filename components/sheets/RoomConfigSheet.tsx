@@ -7,7 +7,7 @@ import {
   type MessageExpiry,
   type RoomConfig,
 } from "@/lib/room";
-import { theme } from "@/lib/theme";
+import { useTheme } from "@/lib/theme";
 import { ModalSheet } from "@/components/ui/ModalSheet";
 import { RadioGroup } from "@/components/ui/RadioGroup";
 import { Input } from "@/components/ui/Input";
@@ -25,12 +25,15 @@ export function RoomConfigSheet({
   onCreateRoom,
 }: RoomConfigSheetProps) {
   const { t } = useTranslation();
+  const { theme } = useTheme();
   const [name, setName] = useState("");
   const [isPublic, setIsPublic] = useState(false);
   const [expiryIdx, setExpiryIdx] = useState(2);
   const [messageExpiry, setMessageExpiry] = useState<MessageExpiry>("after_read");
   const [hasPassword, setHasPassword] = useState(false);
   const [password, setPassword] = useState("");
+  const [allowCodeSharing, setAllowCodeSharing] = useState(true);
+  const [allowScreenshot, setAllowScreenshot] = useState(false);
 
   const handleCreate = () => {
     onCreateRoom({
@@ -39,6 +42,8 @@ export function RoomConfigSheet({
       expiresInMs: EXPIRY_OPTIONS[expiryIdx].ms,
       messageExpiry,
       password: hasPassword && password ? password : undefined,
+      allowCodeSharing,
+      allowScreenshot,
     });
     onClose();
   };
@@ -93,7 +98,7 @@ export function RoomConfigSheet({
               value={isPublic}
               onValueChange={setIsPublic}
               trackColor={{ true: theme.colors.accent, false: theme.colors.border }}
-              thumbColor={theme.colors.bg}
+              thumbColor={theme.colors.switchThumb}
             />
           </View>
         </View>
@@ -155,7 +160,7 @@ export function RoomConfigSheet({
               value={hasPassword}
               onValueChange={setHasPassword}
               trackColor={{ true: theme.colors.accent, false: theme.colors.border }}
-              thumbColor={theme.colors.bg}
+              thumbColor={theme.colors.switchThumb}
             />
           </View>
           {hasPassword && (
@@ -166,6 +171,50 @@ export function RoomConfigSheet({
               onChangeText={setPassword}
             />
           )}
+        </View>
+
+        <View>
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: theme.spacing.sm }}>
+            <Text
+              style={{
+                color: theme.colors.textMuted,
+                fontSize: theme.font.size.xs,
+                fontWeight: theme.font.weight.semibold,
+                textTransform: "uppercase",
+                letterSpacing: 0.5,
+              }}
+            >
+              {t("roomConfig.allowCodeSharing")}
+            </Text>
+            <Switch
+              value={allowCodeSharing}
+              onValueChange={setAllowCodeSharing}
+              trackColor={{ true: theme.colors.accent, false: theme.colors.border }}
+              thumbColor={theme.colors.switchThumb}
+            />
+          </View>
+        </View>
+
+        <View>
+          <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: theme.spacing.sm }}>
+            <Text
+              style={{
+                color: theme.colors.textMuted,
+                fontSize: theme.font.size.xs,
+                fontWeight: theme.font.weight.semibold,
+                textTransform: "uppercase",
+                letterSpacing: 0.5,
+              }}
+            >
+              {t("roomConfig.allowScreenshot")}
+            </Text>
+            <Switch
+              value={allowScreenshot}
+              onValueChange={setAllowScreenshot}
+              trackColor={{ true: theme.colors.accent, false: theme.colors.border }}
+              thumbColor={theme.colors.switchThumb}
+            />
+          </View>
         </View>
       </View>
 

@@ -4,9 +4,9 @@ import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { db } from "@/lib/instant";
-import { isRoomActive, isRoomMember } from "@/lib/room";
+import { isRoomActive, isRoomMember, parseReadBy } from "@/lib/room";
 import { useCurrentUser } from "@/lib/identity";
-import { theme } from "@/lib/theme";
+import { useTheme } from "@/lib/theme";
 import { RoomCard } from "@/components/home/RoomCard";
 import { RoomListSkeleton } from "@/components/home/RoomCardSkeleton";
 
@@ -14,10 +14,14 @@ export default function MyRoomsScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { user } = useCurrentUser();
+  const { theme } = useTheme();
   const senderId = user?.id ?? "";
 
   const roomsQuery = db.useQuery({
-    rooms: { $: { order: { createdAt: "desc" as const } } },
+    rooms: {
+      $: { order: { createdAt: "desc" as const } },
+      messages: {},
+    },
   });
   const allRooms = roomsQuery.data?.rooms ?? [];
 
@@ -25,6 +29,20 @@ export default function MyRoomsScreen() {
     () => allRooms.filter((r) => isRoomActive(r) && isRoomMember(r.members, senderId)),
     [allRooms, senderId]
   );
+
+  const unreadCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const room of myRooms) {
+      let count = 0;
+      for (const msg of room.messages ?? []) {
+        if (msg.senderId === senderId) continue;
+        const readBy = parseReadBy(msg.readBy);
+        if (!readBy.includes(senderId)) count++;
+      }
+      counts[room.id] = count;
+    }
+    return counts;
+  }, [myRooms, senderId]);
 
   return (
     <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: theme.colors.bg }}>
@@ -55,6 +73,7 @@ export default function MyRoomsScreen() {
               <RoomCard
                 room={item}
                 senderId={senderId}
+                unreadCount={unreadCounts[item.id] ?? 0}
                 onPress={() => router.push(`/chat/${item.roomId}`)}
               />
             )}

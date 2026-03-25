@@ -11,7 +11,7 @@ import { ProgressBar } from "@/components/onboarding/ProgressBar";
 import { DemoBubble, type ParticleBurst } from "@/components/onboarding/DemoBubble";
 import { Particles } from "@/components/onboarding/Particles";
 import { useOnboardingContext } from "@/hooks/useOnboarding";
-import { theme } from "@/lib/theme";
+import { useTheme } from "@/lib/theme";
 
 type DemoMessage = { id: string; text: string };
 const PARTICLE_LIFETIME = 2000;
@@ -20,6 +20,7 @@ export default function WowScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { markComplete } = useOnboardingContext();
+  const { theme } = useTheme();
   const [messages, setMessages] = useState<DemoMessage[]>([]);
   const [input, setInput] = useState("");
   const [destroyedCount, setDestroyedCount] = useState(0);
@@ -88,12 +89,10 @@ export default function WowScreen() {
                 key={s}
                 onPress={() => sendMessage(s)}
                 style={({ pressed }) => ({
-                  borderWidth: 1,
-                  borderColor: theme.colors.border,
                   borderRadius: theme.radius.full,
                   paddingHorizontal: theme.spacing.md,
                   paddingVertical: theme.spacing.sm,
-                  backgroundColor: pressed ? theme.colors.bgSecondary : theme.colors.bg,
+                  backgroundColor: pressed ? theme.colors.bgTertiary : theme.colors.bgSecondary,
                 })}
               >
                 <Text style={{ fontSize: theme.font.size.sm, color: theme.colors.textSecondary }}>{s}</Text>

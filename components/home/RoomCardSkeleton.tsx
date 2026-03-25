@@ -1,8 +1,9 @@
 import { View } from "react-native";
 import { Skeleton } from "@/components/ui/Skeleton";
-import { theme } from "@/lib/theme";
+import { useTheme } from "@/lib/theme";
 
 export function RoomCardSkeleton() {
+  const { theme } = useTheme();
   return (
     <View
       style={{

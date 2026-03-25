@@ -1,22 +1,26 @@
-import { useEffect, useState, useRef, useCallback } from "react";
-import { View, FlatList, Text, TextInput, Pressable, Keyboard, Platform } from "react-native";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
+import { View, FlatList, Text, TextInput, Pressable, Keyboard, Platform, NativeModules } from "react-native";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { KeyboardAvoidingView } from "react-native-keyboard-controller";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { db } from "@/lib/instant";
-import { isRoomActive, verifyRoomPassword, deleteRoom, joinRoom, type MessageExpiry } from "@/lib/room";
+import { isRoomActive, verifyRoomPassword, deleteRoom, joinRoom, isBanned, type MessageExpiry } from "@/lib/room";
 import { useCurrentUser, useProfile } from "@/lib/identity";
 import { useMessages } from "@/hooks/useMessages";
 import { usePresence } from "@/hooks/usePresence";
 import { useExpiry } from "@/hooks/useExpiry";
 import { useReadReceipts } from "@/hooks/useReadReceipts";
+import { useImagePicker } from "@/hooks/useImagePicker";
 import { MessageBubble } from "@/components/chat/MessageBubble";
-import { MessageInput } from "@/components/chat/MessageInput";
+import { MessageInput, type ReplyTo } from "@/components/chat/MessageInput";
+import { TypingIndicator } from "@/components/chat/TypingIndicator";
 import { RoomHeader } from "@/components/chat/RoomHeader";
 import { Badge } from "@/components/ui/Badge";
 import { RoomSettingsSheet } from "@/components/sheets/RoomSettingsSheet";
-import { theme } from "@/lib/theme";
+import { ImageViewer } from "@/components/chat/ImageViewer";
+import { ActionPopup } from "@/components/ui/ActionPopup";
+import { useTheme } from "@/lib/theme";
 import { Skeleton } from "@/components/ui/Skeleton";
 
 export default function ChatScreen() {
@@ -25,6 +29,7 @@ export default function ChatScreen() {
   const router = useRouter();
   const flatListRef = useRef<FlatList>(null);
   const insets = useSafeAreaInsets();
+  const { theme } = useTheme();
 
   const { user } = useCurrentUser();
   const senderId = user?.id ?? "";
@@ -37,12 +42,18 @@ export default function ChatScreen() {
     expiresAt: number | null;
     messageExpiry: MessageExpiry;
     passwordHash: string | null;
+    allowCodeSharing?: boolean;
+    allowScreenshot?: boolean;
+    members?: unknown;
+    bannedMembers?: unknown;
   } | null>(null);
   const [showSettings, setShowSettings] = useState(false);
   const [passwordInput, setPasswordInput] = useState("");
   const [needsPassword, setNeedsPassword] = useState(false);
   const [passwordError, setPasswordError] = useState("");
   const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const [viewingImage, setViewingImage] = useState<string | null>(null);
+  const [replyTo, setReplyTo] = useState<ReplyTo | null>(null);
 
   useEffect(() => {
     const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
@@ -67,6 +78,12 @@ export default function ChatScreen() {
       return;
     }
 
+    // Check if user is banned
+    if (senderId && isBanned((room as any).bannedMembers, senderId)) {
+      router.replace("/expired?reason=banned");
+      return;
+    }
+
     if (room.passwordHash && !roomDbId) {
       setNeedsPassword(true);
       setRoomData({
@@ -76,6 +93,10 @@ export default function ChatScreen() {
         expiresAt: room.expiresAt ?? null,
         messageExpiry: room.messageExpiry as MessageExpiry,
         passwordHash: room.passwordHash ?? null,
+        allowCodeSharing: (room as any).allowCodeSharing,
+        allowScreenshot: (room as any).allowScreenshot,
+        members: room.members,
+        bannedMembers: (room as any).bannedMembers,
       });
       return;
     }
@@ -91,6 +112,10 @@ export default function ChatScreen() {
       expiresAt: room.expiresAt ?? null,
       messageExpiry: room.messageExpiry as MessageExpiry,
       passwordHash: room.passwordHash ?? null,
+      allowCodeSharing: (room as any).allowCodeSharing,
+      allowScreenshot: (room as any).allowScreenshot,
+      members: room.members,
+      bannedMembers: (room as any).bannedMembers,
     });
   }, [roomQuery.data?.rooms, router, roomDbId, senderId]);
 
@@ -106,9 +131,10 @@ export default function ChatScreen() {
     }
   };
 
-  const { messages, sendMessage, isLoading } = useMessages(roomDbId);
-  const { onlineCount } = usePresence(roomId!, { senderId, senderName });
+  const { messages, sendMessage, deleteMessage, isLoading } = useMessages(roomDbId);
+  const { onlineCount, typingPeers, onTyping, stopTyping } = usePresence(roomId!, { senderId, senderName });
   const { formatted, urgency, isExpired } = useExpiry(roomData?.expiresAt);
+  const { pickFromCamera, uploadFromUri, permissionError, clearPermissionError } = useImagePicker();
   const { markAsRead } = useReadReceipts(
     roomData?.messageExpiry ?? "never",
     onlineCount
@@ -118,12 +144,46 @@ export default function ChatScreen() {
     if (isExpired) router.replace("/expired?reason=expired");
   }, [isExpired, router]);
 
+  useEffect(() => {
+    if (!roomData) return;
+    const mod = Platform.OS !== "web" ? NativeModules.RNScreenshotPrevent : null;
+    if (!mod) return;
+    if (roomData.allowScreenshot === true) {
+      mod.disableSecureView?.();
+    } else {
+      mod.enableSecureView?.("");
+    }
+    return () => {
+      mod.disableSecureView?.();
+    };
+  }, [roomData?.allowScreenshot]);
+
   const handleSend = useCallback(
-    async (text: string) => {
-      await sendMessage(text, senderId, senderName);
+    async (text: string, image?: { url: string; path: string }) => {
+      stopTyping();
+      const reply = replyTo
+        ? { replyToId: replyTo.id, replyToText: replyTo.text ?? "", replyToSender: replyTo.senderName }
+        : undefined;
+      setReplyTo(null);
+      await sendMessage(text, senderId, senderName, image, reply);
       setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
     },
-    [sendMessage, senderId, senderName]
+    [sendMessage, senderId, senderName, stopTyping, replyTo]
+  );
+
+  const handleDelete = useCallback(
+    (messageId: string) => {
+      const msg = messages.find((m) => m.id === messageId);
+      deleteMessage(messageId, msg?.imagePath);
+    },
+    [messages, deleteMessage]
+  );
+
+  const handleReply = useCallback(
+    (msg: { id: string; text?: string; senderName: string }) => {
+      setReplyTo({ id: msg.id, text: msg.text, senderName: msg.senderName });
+    },
+    []
   );
 
   const handleViewableChange = useCallback(
@@ -135,6 +195,14 @@ export default function ChatScreen() {
     },
     [senderId, markAsRead]
   );
+
+  const memberNames = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const m of messages) {
+      if (!map[m.senderId]) map[m.senderId] = m.senderName;
+    }
+    return map;
+  }, [messages]);
 
   if (needsPassword) {
     return (
@@ -215,6 +283,7 @@ export default function ChatScreen() {
         isCreator={roomData.creatorId === senderId}
         onSettingsPress={() => setShowSettings(true)}
         expiryBadge={<Badge label={formatted} variant={urgency === "critical" ? "critical" : urgency === "warning" ? "warning" : "default"} />}
+        allowCodeSharing={roomData.allowCodeSharing !== false}
       />
 
       <KeyboardAvoidingView
@@ -231,9 +300,18 @@ export default function ChatScreen() {
           keyboardDismissMode="interactive"
           renderItem={({ item }) => (
             <MessageBubble
+              id={item.id}
               text={item.text}
+              imageUrl={item.imageUrl}
               senderId={item.senderId}
+              senderName={item.senderName}
               isOwn={item.senderId === senderId}
+              createdAt={item.createdAt}
+              replyToText={item.replyToText}
+              replyToSender={item.replyToSender}
+              onImagePress={setViewingImage}
+              onDelete={handleDelete}
+              onReply={() => handleReply({ id: item.id, text: item.text, senderName: item.senderName })}
             />
           )}
           onContentSizeChange={() =>
@@ -241,20 +319,43 @@ export default function ChatScreen() {
           }
         />
 
+        <TypingIndicator typingUsers={typingPeers} />
         <View style={{ paddingBottom: keyboardVisible ? 0 : insets.bottom }}>
-          <MessageInput onSend={handleSend} />
+          <MessageInput
+            onSend={handleSend}
+            onTyping={onTyping}
+            onPickFromUri={uploadFromUri}
+            onPickFromCamera={pickFromCamera}
+            onRemoveImage={(path) => (db as any)._core._reactor.deleteFile(path).catch(() => {})}
+            replyTo={replyTo}
+            onCancelReply={() => setReplyTo(null)}
+          />
         </View>
       </KeyboardAvoidingView>
+
+      <ImageViewer imageUrl={viewingImage} onClose={() => setViewingImage(null)} />
 
       {roomDbId && (
         <RoomSettingsSheet
           visible={showSettings}
           onClose={() => setShowSettings(false)}
           roomDbId={roomDbId}
+          userId={senderId}
           roomData={roomData}
           isCreator={roomData.creatorId === senderId}
+          memberNames={memberNames}
         />
       )}
+
+      <ActionPopup
+        visible={!!permissionError}
+        onClose={clearPermissionError}
+        title={permissionError?.title}
+        message={permissionError?.message}
+        options={[
+          { label: "OK", icon: "checkmark-outline", onPress: () => {} },
+        ]}
+      />
     </View>
   );
 }

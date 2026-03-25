@@ -1,8 +1,9 @@
 import { Stack } from "expo-router";
 import { OnboardingProvider } from "@/hooks/useOnboarding";
-import { theme } from "@/lib/theme";
+import { useTheme } from "@/lib/theme";
 
 export default function OnboardingLayout() {
+  const { theme } = useTheme();
   return (
     <OnboardingProvider>
       <Stack

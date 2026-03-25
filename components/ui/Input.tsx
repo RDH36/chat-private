@@ -1,11 +1,12 @@
 import { TextInput, type TextInputProps } from "react-native";
-import { theme } from "@/lib/theme";
+import { useTheme } from "@/lib/theme";
 
 interface InputProps extends TextInputProps {
   centered?: boolean;
 }
 
 export function Input({ centered, style, ...props }: InputProps) {
+  const { theme } = useTheme();
   return (
     <TextInput
       placeholderTextColor={theme.colors.textMuted}

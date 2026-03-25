@@ -12,7 +12,7 @@ import Animated, {
   runOnJS,
 } from "react-native-reanimated";
 import { notifyWarning } from "@/lib/haptics";
-import { theme } from "@/lib/theme";
+import { useTheme } from "@/lib/theme";
 
 const LIVE_DURATION = 3000;
 const APPEAR_DURATION = 400;
@@ -36,6 +36,7 @@ type Props = {
 };
 
 export function DemoBubble({ text, onDestroyed, onParticles }: Props) {
+  const { theme } = useTheme();
   const bubbleRef = useRef<View>(null);
   const opacity = useSharedValue(0);
   const scale = useSharedValue(0.7);
@@ -190,7 +191,7 @@ export function DemoBubble({ text, onDestroyed, onParticles }: Props) {
         <View
           style={{
             height: 2,
-            backgroundColor: isWarning ? "rgba(220,38,38,0.3)" : "rgba(255,255,255,0.15)",
+            backgroundColor: isWarning ? "rgba(220,38,38,0.25)" : theme.colors.accentLight,
             borderRadius: 1,
           }}
         >
@@ -198,7 +199,7 @@ export function DemoBubble({ text, onDestroyed, onParticles }: Props) {
             style={[
               {
                 height: "100%",
-                backgroundColor: isWarning ? theme.colors.error : "rgba(255,255,255,0.5)",
+                backgroundColor: isWarning ? theme.colors.error : theme.colors.accent,
                 borderRadius: 1,
               },
               barStyle,
@@ -215,7 +216,7 @@ export function DemoBubble({ text, onDestroyed, onParticles }: Props) {
               left: 0,
               right: 0,
               bottom: 0,
-              backgroundColor: "#ffffff",
+              backgroundColor: theme.colors.flash,
               borderRadius: 20,
             },
             dissolveOverlayStyle,

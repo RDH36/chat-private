@@ -1,6 +1,6 @@
 import { View } from "react-native";
 import { EaseView } from "react-native-ease";
-import { theme } from "@/lib/theme";
+import { useTheme } from "@/lib/theme";
 
 interface PinDotsProps {
   length: number;
@@ -9,6 +9,7 @@ interface PinDotsProps {
 }
 
 export function PinDots({ length, filled, shaking }: PinDotsProps) {
+  const { theme } = useTheme();
   return (
     <EaseView
       animate={{ translateX: shaking ? 10 : 0 }}

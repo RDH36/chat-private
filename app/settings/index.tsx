@@ -5,18 +5,17 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useCurrentUser, useProfile } from "@/lib/identity";
-import { theme } from "@/lib/theme";
+import { useTheme, type Theme } from "@/lib/theme";
+import type { ThemeMode } from "@/lib/theme/ThemeProvider";
 
-const LANGUAGES = [
-  { code: "fr", label: "Francais" },
-  { code: "en", label: "English" },
-];
+const THEME_MODES: ThemeMode[] = ["light", "dark", "auto"];
 
 export default function SettingsScreen() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
   const { user } = useCurrentUser();
   const { nickname } = useProfile(user?.id);
+  const { theme, themeMode, setThemeMode } = useTheme();
 
   const handleLanguageToggle = async () => {
     const next = i18n.language === "fr" ? "en" : "fr";
@@ -24,7 +23,14 @@ export default function SettingsScreen() {
     await AsyncStorage.setItem("language", next);
   };
 
-  const currentLang = LANGUAGES.find((l) => l.code === i18n.language) ?? LANGUAGES[0];
+  const handleThemeToggle = () => {
+    const currentIndex = THEME_MODES.indexOf(themeMode);
+    const next = THEME_MODES[(currentIndex + 1) % THEME_MODES.length];
+    setThemeMode(next);
+  };
+
+  const themeModeLabel = t(`settings.theme_${themeMode}`);
+  const currentLang = i18n.language === "fr" ? "Francais" : "English";
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.colors.bg }}>
@@ -41,8 +47,8 @@ export default function SettingsScreen() {
 
         {/* Avatar + pseudo */}
         <View style={{ flexDirection: "row", alignItems: "center", gap: 14, marginBottom: 32 }}>
-          <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: theme.colors.bgSecondary, alignItems: "center", justifyContent: "center" }}>
-            <Text style={{ fontSize: 24 }}>{nickname ? nickname.charAt(0).toUpperCase() : "?"}</Text>
+          <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: theme.colors.accent, alignItems: "center", justifyContent: "center" }}>
+            <Text style={{ fontSize: 24, color: theme.colors.accentText, fontWeight: "600" }}>{nickname ? nickname.charAt(0).toUpperCase() : "?"}</Text>
           </View>
           <View>
             <Text style={{ color: theme.colors.text, fontSize: 18, fontWeight: "600" }}>{nickname}</Text>
@@ -55,27 +61,38 @@ export default function SettingsScreen() {
         {/* Menu */}
         <View style={{ gap: 8 }}>
           <SettingsLink
+            theme={theme}
             icon="person-outline"
             label={t("settings.profile")}
             subtitle={t("settings.nickname")}
             onPress={() => router.push("/settings/profile")}
           />
           <SettingsLink
+            theme={theme}
             icon="lock-closed-outline"
             label={t("settings.security")}
             subtitle={t("settings.securitySubtitle")}
             onPress={() => router.push("/settings/security")}
           />
           <SettingsLink
+            theme={theme}
             icon="mail-outline"
             label={t("settings.account")}
             subtitle={user?.email ? t("settings.accountProtected") : t("settings.accountGuest")}
             onPress={() => router.push("/settings/account")}
           />
           <SettingsLink
+            theme={theme}
+            icon="color-palette-outline"
+            label={t("settings.appearance")}
+            subtitle={themeModeLabel}
+            onPress={handleThemeToggle}
+          />
+          <SettingsLink
+            theme={theme}
             icon="language-outline"
             label={t("settings.language")}
-            subtitle={currentLang.label}
+            subtitle={currentLang}
             onPress={handleLanguageToggle}
           />
         </View>
@@ -84,7 +101,8 @@ export default function SettingsScreen() {
   );
 }
 
-function SettingsLink({ icon, label, subtitle, onPress }: {
+function SettingsLink({ theme, icon, label, subtitle, onPress }: {
+  theme: Theme;
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
   subtitle: string;

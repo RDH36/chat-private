@@ -5,13 +5,14 @@ import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
 import { useCurrentUser } from "@/lib/identity";
-import { theme } from "@/lib/theme";
+import { useTheme } from "@/lib/theme";
 import { EmailLinkSheet } from "@/components/auth/EmailLinkSheet";
 
 export default function AccountScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { user } = useCurrentUser();
+  const { theme } = useTheme();
   const [showEmailLink, setShowEmailLink] = useState(false);
 
   return (

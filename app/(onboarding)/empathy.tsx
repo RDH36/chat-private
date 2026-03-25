@@ -7,7 +7,7 @@ import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { notifySuccess } from "@/lib/haptics";
 import { OnboardingShell } from "@/components/onboarding/OnboardingShell";
 import { useOnboardingContext, type EmpathyProfile } from "@/hooks/useOnboarding";
-import { theme } from "@/lib/theme";
+import { useTheme } from "@/lib/theme";
 
 const PROFILE_CONFIG: Record<EmpathyProfile, { icon: keyof typeof Ionicons.glyphMap; titleKey: string; bodyKey: string }> = {
   watcher: { icon: "eye-off-outline", titleKey: "onboarding.watcherTitle", bodyKey: "onboarding.watcherBody" },
@@ -19,6 +19,7 @@ export default function EmpathyScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const { profile } = useOnboardingContext();
+  const { theme } = useTheme();
   const [showContent, setShowContent] = useState(false);
 
   const config = PROFILE_CONFIG[profile];

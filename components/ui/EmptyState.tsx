@@ -1,6 +1,6 @@
 import { View, Text } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { theme } from "@/lib/theme";
+import { useTheme } from "@/lib/theme";
 import { Button } from "./Button";
 
 interface EmptyStateProps {
@@ -18,6 +18,7 @@ export function EmptyState({
   actionLabel,
   onAction,
 }: EmptyStateProps) {
+  const { theme } = useTheme();
   return (
     <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: theme.spacing.xl }}>
       <Ionicons

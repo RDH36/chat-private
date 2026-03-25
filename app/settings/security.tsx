@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
-import { View, Text, Pressable, Switch, Alert } from "react-native";
+import { View, Text, Pressable, Switch } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useTranslation } from "react-i18next";
-import { theme } from "@/lib/theme";
+import { useTheme } from "@/lib/theme";
 import { RadioGroup } from "@/components/ui/RadioGroup";
 import {
   isBiometricAvailable,
@@ -14,9 +14,11 @@ import {
   setLockDelay,
   verifyPin,
   storePin,
+  hasPinConfigured,
 } from "@/lib/auth";
 import { PinDots } from "@/components/lock/PinDots";
 import { PinPad } from "@/components/lock/PinPad";
+import { ActionPopup } from "@/components/ui/ActionPopup";
 
 const DELAY_OPTIONS = [
   { labelKey: "security.immediate", ms: 0 },
@@ -30,20 +32,24 @@ type PinStep = null | "verify" | "new" | "confirm";
 export default function SecurityScreen() {
   const { t } = useTranslation();
   const router = useRouter();
+  const { theme } = useTheme();
   const [bioAvailable, setBioAvailable] = useState(false);
   const [bioEnabled, setBioEnabled] = useState(false);
+  const [hasPin, setHasPin] = useState(false);
   const [delay, setDelay] = useState(0);
   const [pinStep, setPinStep] = useState<PinStep>(null);
   const [pin, setPin] = useState("");
   const [newPin, setNewPin] = useState("");
   const [shaking, setShaking] = useState(false);
   const [error, setError] = useState("");
+  const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
     (async () => {
       setBioAvailable(await isBiometricAvailable());
       setBioEnabled(await isBiometricEnabled());
       setDelay(await getLockDelay());
+      setHasPin(await hasPinConfigured());
     })();
   }, []);
 
@@ -79,8 +85,9 @@ export default function SecurityScreen() {
           } else if (pinStep === "confirm") {
             if (next === newPin) {
               await storePin(next);
-              Alert.alert(t("security.success"), t("security.pinUpdated"));
+              setHasPin(true);
               setPinStep(null); setPin(""); setNewPin("");
+              setShowSuccess(true);
             } else {
               shake(t("security.pinMismatch"));
               setPinStep("new"); setNewPin("");
@@ -132,10 +139,12 @@ export default function SecurityScreen() {
 
         <View style={{ gap: 12 }}>
           <Pressable
-            onPress={() => setPinStep("verify")}
+            onPress={() => setPinStep(hasPin ? "verify" : "new")}
             style={{ backgroundColor: theme.colors.bgSecondary, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 16 }}
           >
-            <Text style={{ color: theme.colors.text, fontSize: 16 }}>{t("security.changePin")}</Text>
+            <Text style={{ color: theme.colors.text, fontSize: 16 }}>
+              {hasPin ? t("security.changePin") : t("security.createPin")}
+            </Text>
           </Pressable>
 
           {bioAvailable && (
@@ -144,8 +153,8 @@ export default function SecurityScreen() {
               <Switch
                 value={bioEnabled}
                 onValueChange={handleToggleBio}
-                trackColor={{ true: theme.colors.accent, false: theme.colors.bgTertiary }}
-                thumbColor={theme.colors.bg}
+                trackColor={{ true: theme.colors.accent, false: theme.colors.border }}
+                thumbColor={theme.colors.switchThumb}
               />
             </View>
           )}
@@ -160,6 +169,16 @@ export default function SecurityScreen() {
           onSelect={(value) => handleDelayChange(parseInt(value, 10))}
         />
       </View>
+
+      <ActionPopup
+        visible={showSuccess}
+        onClose={() => setShowSuccess(false)}
+        title={t("security.success")}
+        message={t("security.pinUpdated")}
+        options={[
+          { label: "OK", icon: "checkmark-outline", onPress: () => {} },
+        ]}
+      />
     </SafeAreaView>
   );
 }

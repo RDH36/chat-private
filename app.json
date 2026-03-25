@@ -2,16 +2,16 @@
   "expo": {
     "name": "Brume",
     "slug": "chat-private",
-    "version": "1.0.0",
+    "version": "0.0.5",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "icon": "./assets/adaptive-icon.png",
+    "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "scheme": "brume",
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/adaptive-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#0a0a0a"
+      "backgroundColor": "#2B2926"
     },
     "ios": {
       "supportsTablet": false,
@@ -21,12 +21,7 @@
       "bundleIdentifier": "com.rdh36.brume"
     },
     "android": {
-      "adaptiveIcon": {
-        "backgroundColor": "#0a0a0a",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
-      },
+      "adaptiveIcon": "./assets/adaptive-icon.png",
       "permissions": [
         "android.permission.USE_BIOMETRIC",
         "android.permission.USE_FINGERPRINT"

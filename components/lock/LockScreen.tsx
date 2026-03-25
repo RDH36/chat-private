@@ -5,7 +5,7 @@ import { EaseView } from "react-native-ease";
 import { useTranslation } from "react-i18next";
 import { PinDots } from "@/components/lock/PinDots";
 import { PinPad } from "@/components/lock/PinPad";
-import { theme } from "@/lib/theme";
+import { useTheme } from "@/lib/theme";
 import {
   verifyPin,
   storePin,
@@ -29,6 +29,7 @@ type Props = {
 
 export function LockScreen({ initialMode, onUnlock }: Props) {
   const { t } = useTranslation();
+  const { theme } = useTheme();
   const [mode, setMode] = useState<Mode>(initialMode);
   const [pin, setPin] = useState("");
   const [setupPin, setSetupPin] = useState("");

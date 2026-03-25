@@ -1,6 +1,6 @@
 import { View, Text, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { theme } from "@/lib/theme";
+import { useTheme } from "@/lib/theme";
 
 interface PinPadProps {
   onDigitPress: (digit: string) => void;
@@ -16,6 +16,7 @@ const ROWS = [
 ];
 
 export function PinPad({ onDigitPress, onDeletePress, disabled }: PinPadProps) {
+  const { theme } = useTheme();
   return (
     <View style={{ gap: 12, paddingHorizontal: 48 }}>
       {ROWS.map((row, rowIdx) => (

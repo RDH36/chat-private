@@ -1,7 +1,7 @@
 import { View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ProgressBar } from "./ProgressBar";
-import { theme } from "@/lib/theme";
+import { useTheme } from "@/lib/theme";
 
 type Props = {
   step: number;
@@ -10,6 +10,7 @@ type Props = {
 };
 
 export function OnboardingShell({ step, total = 4, children }: Props) {
+  const { theme } = useTheme();
   return (
     <SafeAreaView edges={["top"]} style={{ flex: 1, backgroundColor: theme.colors.bg }}>
       <View style={{ paddingHorizontal: theme.spacing.xl, paddingTop: theme.spacing.lg }}>

@@ -1,5 +1,5 @@
 import { Pressable, Text, type PressableProps } from "react-native";
-import { theme } from "@/lib/theme";
+import { useTheme } from "@/lib/theme";
 
 type ButtonVariant = "primary" | "secondary" | "destructive";
 
@@ -9,11 +9,11 @@ interface ButtonProps extends Omit<PressableProps, "children"> {
   fullWidth?: boolean;
 }
 
-const VARIANT_STYLES: Record<ButtonVariant, { bg: string; text: string }> = {
-  primary: { bg: theme.colors.accent, text: theme.colors.accentText },
-  secondary: { bg: theme.colors.bgSecondary, text: theme.colors.text },
-  destructive: { bg: theme.colors.errorBg, text: theme.colors.error },
-};
+const getVariantStyles = (colors: Record<string, string>) => ({
+  primary: { bg: colors.accent, text: colors.accentText },
+  secondary: { bg: colors.bgSecondary, text: colors.text },
+  destructive: { bg: colors.errorBg, text: colors.error },
+});
 
 export function Button({
   label,
@@ -23,7 +23,9 @@ export function Button({
   style,
   ...props
 }: ButtonProps) {
-  const colors = VARIANT_STYLES[variant];
+  const { theme } = useTheme();
+  const variantStyles = getVariantStyles(theme.colors);
+  const colors = variantStyles[variant];
 
   return (
     <Pressable

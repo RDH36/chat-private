@@ -14,6 +14,8 @@ export interface RoomConfig {
   expiresInMs: number | null; // null = never
   messageExpiry: MessageExpiry;
   password?: string;
+  allowCodeSharing?: boolean; // default true
+  allowScreenshot?: boolean; // default false (blocked)
 }
 
 const EXPIRY_OPTIONS = [
@@ -50,6 +52,8 @@ export async function createRoom(
       expiresAt: config.expiresInMs ? now + config.expiresInMs : undefined,
       messageExpiry: config.messageExpiry,
       passwordHash: config.password ? sha256(config.password) : undefined,
+      allowCodeSharing: config.allowCodeSharing ?? true,
+      allowScreenshot: config.allowScreenshot ?? false,
       members: JSON.stringify([creatorId]),
     })
   );
@@ -67,18 +71,34 @@ export function isRoomActive(room: {
 }
 
 export async function deleteRoom(roomDbId: string): Promise<void> {
+  await deleteRoomImages(roomDbId);
   await db.transact(tx.rooms[roomDbId].delete());
 }
 
-export function cleanupExpiredRooms(
+async function deleteRoomImages(roomDbId: string): Promise<void> {
+  try {
+    const { data } = await db.queryOnce({
+      messages: { $: { where: { room: roomDbId } } },
+    });
+    const paths = (data?.messages ?? [])
+      .map((m: { imagePath?: string | null }) => m.imagePath)
+      .filter(Boolean) as string[];
+    await Promise.all(paths.map((p) => db.storage.delete(p).catch(() => {})));
+  } catch {
+    // Best-effort cleanup
+  }
+}
+
+export async function cleanupExpiredRooms(
   rooms: Array<{ id: string; expiresAt?: number | null; deletedAt?: number | null }>
-): void {
+): Promise<void> {
   const now = Date.now();
   const toDelete = rooms.filter(
     (r) => r.deletedAt || (r.expiresAt && r.expiresAt < now)
   );
   if (toDelete.length === 0) return;
-  db.transact(toDelete.map((r) => tx.rooms[r.id].delete()));
+  await Promise.all(toDelete.map((r) => deleteRoomImages(r.id)));
+  await db.transact(toDelete.map((r) => tx.rooms[r.id].delete()));
 }
 
 export function verifyRoomPassword(
@@ -97,6 +117,15 @@ export function parseMembers(members: unknown): string[] {
   return [];
 }
 
+export function parseReadBy(readBy: unknown): string[] {
+  if (!readBy) return [];
+  if (typeof readBy === "string") {
+    try { return JSON.parse(readBy); } catch { return []; }
+  }
+  if (Array.isArray(readBy)) return readBy;
+  return [];
+}
+
 export function isRoomMember(members: unknown, userId: string): boolean {
   return parseMembers(members).includes(userId);
 }
@@ -110,6 +139,43 @@ export async function joinRoom(
   if (members.includes(userId)) return;
   members.push(userId);
   await db.transact(tx.rooms[roomDbId].update({ members: JSON.stringify(members) }));
+}
+
+export function parseBannedMembers(banned: unknown): string[] {
+  if (!banned) return [];
+  if (typeof banned === "string") {
+    try { return JSON.parse(banned); } catch { return []; }
+  }
+  if (Array.isArray(banned)) return banned;
+  return [];
+}
+
+export function isBanned(bannedMembers: unknown, userId: string): boolean {
+  return parseBannedMembers(bannedMembers).includes(userId);
+}
+
+export async function leaveRoom(
+  roomDbId: string,
+  userId: string,
+  currentMembers: unknown
+): Promise<void> {
+  const members = parseMembers(currentMembers).filter((id) => id !== userId);
+  await db.transact(tx.rooms[roomDbId].update({ members: JSON.stringify(members) }));
+}
+
+export async function banUser(
+  roomDbId: string,
+  userId: string,
+  currentMembers: unknown,
+  currentBanned: unknown
+): Promise<void> {
+  const members = parseMembers(currentMembers).filter((id) => id !== userId);
+  const banned = parseBannedMembers(currentBanned);
+  if (!banned.includes(userId)) banned.push(userId);
+  await db.transact(tx.rooms[roomDbId].update({
+    members: JSON.stringify(members),
+    bannedMembers: JSON.stringify(banned),
+  }));
 }
 
 export async function renameRoom(
@@ -126,6 +192,24 @@ export async function setRoomVisibility(
   await db.transact(tx.rooms[roomDbId].update({ isPublic }));
 }
 
+export async function setRoomExpiry(
+  roomDbId: string,
+  expiresInMs: number | null
+): Promise<void> {
+  await db.transact(
+    tx.rooms[roomDbId].update({
+      expiresAt: expiresInMs ? Date.now() + expiresInMs : undefined,
+    })
+  );
+}
+
+export async function setRoomMessageExpiry(
+  roomDbId: string,
+  messageExpiry: MessageExpiry
+): Promise<void> {
+  await db.transact(tx.rooms[roomDbId].update({ messageExpiry }));
+}
+
 export async function setRoomPassword(
   roomDbId: string,
   password: string | null
@@ -135,4 +219,18 @@ export async function setRoomPassword(
       passwordHash: password ? sha256(password) : "",
     })
   );
+}
+
+export async function setRoomAllowCodeSharing(
+  roomDbId: string,
+  allowCodeSharing: boolean
+): Promise<void> {
+  await db.transact(tx.rooms[roomDbId].update({ allowCodeSharing }));
+}
+
+export async function setRoomAllowScreenshot(
+  roomDbId: string,
+  allowScreenshot: boolean
+): Promise<void> {
+  await db.transact(tx.rooms[roomDbId].update({ allowScreenshot }));
 }

@@ -1,7 +1,7 @@
 import { View, Text, Pressable } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useTranslation } from "react-i18next";
-import { theme } from "@/lib/theme";
+import { useTheme } from "@/lib/theme";
 
 interface RoomCardProps {
   room: {
@@ -12,11 +12,13 @@ interface RoomCardProps {
     expiresAt?: number | null;
   };
   senderId: string;
+  unreadCount?: number;
   onPress: () => void;
 }
 
-export function RoomCard({ room, senderId, onPress }: RoomCardProps) {
+export function RoomCard({ room, senderId, unreadCount = 0, onPress }: RoomCardProps) {
   const { t } = useTranslation();
+  const { theme } = useTheme();
   const displayName = room.name || room.roomId;
   const isCreator = room.creatorId === senderId;
 
@@ -75,6 +77,21 @@ export function RoomCard({ room, senderId, onPress }: RoomCardProps) {
         {isCreator && (
           <View style={{ backgroundColor: theme.colors.bgTertiary, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 }}>
             <Text style={{ color: theme.colors.textSecondary, fontSize: 11, fontWeight: "600" }}>{t("room.creator")}</Text>
+          </View>
+        )}
+        {unreadCount > 0 && (
+          <View style={{
+            backgroundColor: theme.colors.accent,
+            borderRadius: theme.radius.full,
+            minWidth: 22,
+            height: 22,
+            alignItems: "center",
+            justifyContent: "center",
+            paddingHorizontal: 6,
+          }}>
+            <Text style={{ color: theme.colors.accentText, fontSize: 12, fontWeight: "bold" }}>
+              {unreadCount > 99 ? "99+" : unreadCount}
+            </Text>
           </View>
         )}
         <Ionicons name="chevron-forward" size={18} color={theme.colors.textMuted} />

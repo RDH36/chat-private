@@ -1,5 +1,5 @@
 import { View, Text } from "react-native";
-import { theme } from "@/lib/theme";
+import { useTheme } from "@/lib/theme";
 
 type BadgeVariant = "default" | "warning" | "critical" | "success";
 
@@ -8,15 +8,17 @@ interface BadgeProps {
   variant?: BadgeVariant;
 }
 
-const VARIANT_STYLES: Record<BadgeVariant, { bg: string; text: string }> = {
-  default: { bg: theme.colors.bgSecondary, text: theme.colors.textSecondary },
-  warning: { bg: theme.colors.warningBg, text: theme.colors.warning },
-  critical: { bg: theme.colors.errorBg, text: theme.colors.error },
-  success: { bg: theme.colors.bgSecondary, text: theme.colors.success },
-};
+const getVariantStyles = (colors: Record<string, string>) => ({
+  default: { bg: colors.bgSecondary, text: colors.textSecondary },
+  warning: { bg: colors.warningBg, text: colors.warning },
+  critical: { bg: colors.errorBg, text: colors.error },
+  success: { bg: colors.bgSecondary, text: colors.success },
+});
 
 export function Badge({ label, variant = "default" }: BadgeProps) {
-  const colors = VARIANT_STYLES[variant];
+  const { theme } = useTheme();
+  const variantStyles = getVariantStyles(theme.colors);
+  const colors = variantStyles[variant];
 
   return (
     <View
